@@ -1,0 +1,80 @@
+This is the source code for the GBA Jam 2022 version
+of Pocket Paint by Johnathan Roatch.
+
+For copyright licensing information not defined in individual files see UNLICENSE.
+
+That being said I highly recommend you *do not* use the whole project as
+a "framework" to to start a new game from, but instead to read through
+the code and maybe pick up a tidbit or two on how to do some things.​
+
+If you happen to have A working instalation of `make`, `gcc`,
+`arm-none-eabi-*`, and `lz4` ready to run from your system path,
+then invoking `make` will build Pocket Paint.
+
+
+## Thanks to
+
+Jasper Vijn for his wonderful guide TONC https://www.coranac.com/tonc/text/toc.htm
+gba_mem_def.h is a compilation of hardware names from TONC
+
+The authors of PocketNES, Especialy for the "exiting to flash carts" routine
+
+I think I also took the linker script `gba_mb.ld` from PocketNES as well,
+but I forget.
+
+Felix Jones for https://github.com/felixjones/agbabi making me aware for
+the need of the set of `__aeabi_*` routines. I had planed to rewrite
+those routines in my `gba_crt0.s` for the sake of "originaly"
+but in the end that dosn't matter.
+
+pinobatch for the Save/Load icons.
+
+laqieer for https://github.com/laqieer/libsavgba
+flash saving and loading code
+
+https://github.com/Aikku93/ulcplayer-gba for giving me the idea to use a
+de-Bruijn string to implement log2() to then use as the priority system of
+the interrupt service routine.
+
+incbin.h ​because including binary data is a non trivial task in C
+
+
+## Special things that I did I would like to bring to attention
+
+gba_crt0.s contains not only the startup and shutdown code, but also
+the ARM embedded ABI routines that a C environment expects
+
+The bootup order is
+- Set GBA bus registers, including enableing all interrupts
+- Start 16.78 Mhz Hardware timer to let run indefinitely
+- Relocate from ROM to WRAM (using memcpy in ROM)
+- Copy ARM routines (including __aeabi_*) to IWRAM (using memcpy in WRAM)
+- populate SoftReset Flag, __isr_table, memset/memcpy C stuff (now using memcpy in IWRAM)
+- start main
+
+Exiting main will in order
+- try exiting to flash cart
+- failing that, Soft Reset to ROM if cart detected
+- else Soft Reset to WRAM
+additionally "Soft Reset" will execute the BIOS calls that simulates what
+the hardware state is when the GBA logo plays out.
+
+I have a VRAM 16-bit bus safe LZ4 decompression routine in `iwram_code.s`
+
+The interrupt service routine passes a timestamp to called routines.
+That same timestamp is used in get_system_clock() but note that it
+needs IME to be disabled.
+
+​The default 8-bit palette (unused) is from this conversation back in 2016
+https://forums.nesdev.org/viewtopic.php?p=166952#p166952
+
+I have a pixel ploting API that ​accommodates bitmap and
+tilemap modes from 1bpp to 16bpp. I might in the future
+have some routines to compute the byte pitches given a
+discription of a tilemap
+
+The cursor inverts based on a gamma adjusted blur of the pixels underneath.
+
+The magnifying glass is all just palette colors
+
+

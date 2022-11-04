@@ -1,0 +1,20 @@
+#!/bin/head -n 20
+Hello,
+This is the self documantaion for this GBA save file. The total size
+should be 131072 bytes, if it's only 65536 bytes then the 16bpp image
+will be missing. The save is formated according to this table:
+
+  000000-001BFF: This documantaion padded with newlines
+  001C00-001C07: Magic: b'\x1A\xC1\xBF\nAXPE'
+  001C08-001DFF: TBD
+  001E00-001FFF: The 256 color palette for the following image
+  002000-00BFFF: 256*160 pixel 8bpp palette image (40960 bytes total)
+  00C000-01FFFF: 256*160 pixel 16bpp image (81920 bytes total)
+
+8 pixels on the left and right sides for both images are unused for now.
+
+The 16bpp image spans across two 64K banks with the first 32 rows being
+in the first bank. Check that the msb of address 0x011C01 is not 1,
+that may mean that the whole bank is either cleared to 0xff or mirrored
+from the header info.
+
